@@ -6,12 +6,14 @@ use IEEE.NUMERIC_STD.ALL;
 
 
 entity TOP is
-    Port ( Anode : out STD_LOGIC_VECTOR (3 downto 0);
+    Port ( CLK : in STD_LOGIC;
+           Anode : out STD_LOGIC_VECTOR (3 downto 0);
            LED_out : out STD_LOGIC_VECTOR (6 downto 0);
-           sw : in STD_LOGIC_VECTOR (9 downto 0); -- change back to 9 downto 0
+           sw : in STD_LOGIC_VECTOR (9 downto 0);
            copy : in STD_LOGIC;
            enter : in STD_LOGIC;
            reset : in STD_LOGIC;
+           abort : in STD_LOGIC;
            left : in std_logic;
            right : in std_logic;
            beg : in std_logic);
@@ -52,18 +54,21 @@ begin
 Anode <= "1110";
 
 
-get_input: process(reset, copy, sw)
+ui: process(enter, reset, copy, sw, left, right, beg, abort, done)
 variable temp_array : integerarray;
 variable num : integer; -- do you really need this???
 variable n : integer := 0;  --:= input_array'length;
+variable position : integer := 0;
 begin
 
 --while enter = '0' loop
+--if CLK'event and CLK = '1' then 
+if enter = '0' then
 for j in 0 to (max_size-1) loop
 
     if (reset = '1') then
         --temp_array(n downto 0) := 0;
-        LED_out <= "1111110";
+        LED_out <= Print(10);
         for i in 0 to (max_size-1) loop
             temp_array(i) := 0;
         end loop;
@@ -97,54 +102,34 @@ for j in 0 to (max_size-1) loop
         LED_out <= "1111110";
 end if;
 end loop;
+end if;
 
 
 valid_count <= n;
 input_array <= temp_array;
-end process;
 
 
 
-
-
-
-
-algo: process(enter)
-begin
-if enter = '1' then
-    
---- algorithm code---
-output_array <= input_array;
-
-end if;
-
-done <= '1';
-end process;
-
-
-
-
-
-
---- A for loop won't work for this. 
-print_output : process 
-variable position : integer := 0;
-begin
-if done = '1' then
+if abort = '0' and (done = '1' and enter = '1') then
+for i in 0 to max_size*5 loop
     if beg = '1' then
-        LED_out <= Print(output_array(0));
+        position := 0;
+        --LED_out <= Print(output_array(0));
     elsif right = '1' then
         position := position + 1;
-        LED_out <= Print(output_array(position));
+        --LED_out <= Print(output_array(position));
     elsif left = '1' then
         position := position - 1;
-        LED_out <= Print(output_array(position));
+        --LED_out <= Print(output_array(position));
     else
         LED_out <= Print(10);       
     end if;
+LED_out <= Print(output_array(position));
+end loop;
 end if;
-wait;
+--end if;
 end process;
+
 
 
 end Behavioral;
